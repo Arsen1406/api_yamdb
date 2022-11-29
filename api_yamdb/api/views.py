@@ -1,3 +1,13 @@
-from django.shortcuts import render
+from rest_framework import mixins, viewsets
 
-# Create your views here.
+class SignUpViewSet():
+    pass
+
+class TokenViewSet():
+    pass
+
+class UsersViewSet():
+    pass
+
+class MeViewSet():
+    pass
