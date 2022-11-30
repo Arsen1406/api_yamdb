@@ -8,8 +8,9 @@ from .views import (
 router_v1 = routers.DefaultRouter()
 router_v1.register(r'auth/signup', SignUpViewSet)
 router_v1.register(r'auth/token', TokenViewSet)
+router_v1.register(r'users/me/', MeViewSet)
 router_v1.register(r'users', UsersViewSet)
-router_v1.register(r'users/me', MeViewSet)
+
 
 urlpatterns = [
     path('v1/', include(router_v1.urls)),
