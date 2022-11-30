@@ -76,4 +76,3 @@ username и confirmation_code на эндпоинт. В ответ ему при
 <a href="https://github.com/Arsen1406">Григорян Арсен</a><br>
 <a href="https://github.com/Zhuravlev-DP">Журавлёв Дмитрий</a><br>
 <a href="https://github.com/Vladislav193">Каверин Владислав</a><br>
-
