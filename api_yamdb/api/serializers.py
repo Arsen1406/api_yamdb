@@ -1,7 +1,5 @@
 import re
-
 from rest_framework import serializers
-
 from reviews.models import User
 
 
@@ -17,4 +15,4 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Username может содержать только буквы, цифры и @/./+/-/_'
             )
-        return value        
+        return value

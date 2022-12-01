@@ -3,15 +3,16 @@ from rest_framework.pagination import LimitOffsetPagination
 
 from reviews.models import User
 from .permissions import AdminOnly
-from .serializers import (
-    UserSerializer
-)
+from .serializers import UserSerializer
+
 
 class SignUpViewSet():
     pass
 
+
 class TokenViewSet():
     pass
+
 
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -19,9 +20,9 @@ class UsersViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = (AdminOnly,)
     pagination_class = LimitOffsetPagination
-    filter_backends = (filters.SearchFilter, )
+    filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
-    
+
 
 class MeViewSet():
     pass
