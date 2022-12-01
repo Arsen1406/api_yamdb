@@ -1,3 +1,6 @@
-from django.db import models
+import enum
 
-# Create your models here.
+class Role(enum.Enum):
+    user = 10
+    moderator = 20
+    admin = 30
