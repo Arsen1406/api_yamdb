@@ -58,8 +58,26 @@ class Title(models.Model):
         Category,
         on_delete=models.SET_NULL,
         related_name='titles',
-        null=True,
+        null=True
     )
+
+# class Book(models.Model):
+#     ...
+#     rating = models.IntegerField(default=0, null=True, blank=True)
+
+# class Vote(models.Model):
+#     # можно сделать choices типа like/dislike или от одного до пяти, если звёзды будут, но это уже смотрите по ситуации
+#     value = models.SmallIntegerField()
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     book = models.ForeignKey(Book, on_delete=models.CASCADE)
+#     voted_on = models.DateTimeField(auto_now=True)
+
+#     class Meta:
+#         # а вот эта команда и не даст повторно голосовать
+#         unique_together = ('user', 'book')
+
+
+
 
     # @property
     # def average_rating(self):
@@ -78,7 +96,7 @@ class Review(models.Model):
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name='reviews')
     score = models.SmallIntegerField(
-        default=0,
+        default=None,
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
     pub_date = models.DateTimeField(
@@ -89,7 +107,7 @@ class Review(models.Model):
 
     class Meta:
         constraints = [
-            CheckConstraint(check=Q(score__range=(0, 10)), name='valid_score'),
+            # CheckConstraint(check=Q(score__range=(1, 10)), name='valid_score'),
             UniqueConstraint(fields=['author', 'title'], name='rating_once')
         ]
 
@@ -105,9 +123,3 @@ class Comment(models.Model):
         auto_now_add=True,
         db_index=True
     )
-
-
-class Role(enum.Enum):
-    user = 10
-    moderator = 20
-    admin = 30

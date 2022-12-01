@@ -1,6 +1,6 @@
-from rest_framework import mixins, viewsets, filters
+from rest_framework import mixins, viewsets, filters, generics
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.models import Token 
 from rest_framework.authentication import SessionAuthentication, \
     BasicAuthentication
 from rest_framework.permissions import (
@@ -17,7 +17,8 @@ from .serializers import (
     UserSerializer,
     TitlesSerializer,
     CommentSerializer,
-    ReviewSerializer
+    ReviewSerializer,
+    MeSerializer
 )
 
 #
@@ -82,3 +83,13 @@ class UsersViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
+
+
+class MeViewSet(mixins.RetrieveModelMixin,
+                mixins.UpdateModelMixin,
+                viewsets.GenericViewSet):
+    serializer_class = MeSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return get_object_or_404(User, pk=self.request.user)
