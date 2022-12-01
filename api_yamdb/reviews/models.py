@@ -1,3 +1,4 @@
+import enum
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -104,3 +105,9 @@ class Comment(models.Model):
         auto_now_add=True,
         db_index=True
     )
+
+
+class Role(enum.Enum):
+    user = 10
+    moderator = 20
+    admin = 30
