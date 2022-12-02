@@ -45,3 +45,24 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = '__all__'
+
+
+class SignUpSerilizator(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('username', 'email')
+
+    # def validate_email(self, value):
+    #     if re.compile('^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$').match(value) is None:
+    #         raise serializers.ValidationError(
+    #             'Email может содержать только буквы, цифры и @/./+/-/_"'
+    #         )
+    #     return value
+
+    # def validate_usernamel(self, value):
+    #     if re.compile("^(?!me$)[\w.@+-]+").match(value) is None:
+    #         raise serializers.ValidationError(
+    #             'Username может содержать только буквы, цифры и @/./+/-/_ и не может быть "me"'
+    #         )
+        # return value
