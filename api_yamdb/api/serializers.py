@@ -91,3 +91,4 @@ class TokenSerializer(serializers.ModelSerializer):
         # проверить доступ к объекту user - правильно ли self.user???
         return default_token_generator.check_token(self.user,
                                                    confirmation_code)
+
