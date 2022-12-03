@@ -1,4 +1,7 @@
 import re
+
+from django.contrib.auth.tokens import default_token_generator
+
 from rest_framework import serializers
 from reviews.models import User, Title, Review, Comment
 
@@ -64,3 +67,19 @@ class SignUpSerilizator(serializers.ModelSerializer):
     #             'Username может содержать только буквы, цифры и @/./+/-/_ и не может быть "me"'
     #         )
     # return value
+
+class ConfirmationCode(serializers.Field):
+    def to_representation(self, value):
+        return value
+
+
+class TokenSerilizator(serializers.ModelSerializer):
+    confirmation_code = ConfirmationCode()
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')
+
+    def validate_confirmation_code(self, confirmation_code):
+        """Возвращает true или false в зависимости от правильности confirmation_code"""
+        # проверить доступ к объекту user - правильно ли self.user???
+        return default_token_generator.check_token(self.user, confirmation_code)

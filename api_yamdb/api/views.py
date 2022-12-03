@@ -15,12 +15,11 @@ from reviews.models import User, Title, Review, Comment
 from .permissions import AdminOnly
 from .send_email import send_email
 from .serializers import (
-    UserSerializer,
+    UserSerializer, MeSerializer,
     TitlesSerializer,
     CommentSerializer,
     ReviewSerializer,
-    MeSerializer,
-    SignUpSerilizator
+    SignUpSerilizator, TokenSerilizator
 )
 
 
@@ -116,3 +115,24 @@ class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         # if User.objects.get(username=serializer.validated_data.get('username')).exists():
         #     return Response(data={'Ошибка': 'Отсутствует обязательное поле, или оно не корректно'}, status=400)
         # serializer.save()
+
+
+class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """Пользователь отправляет POST-запрос с параметрами username
+    и confirmation_code на эндпоинт /api/v1/auth/token/, 
+        в ответе наserializer_class = SignUpSerilizator"""
+    lookup_field = 'username'
+    serializer_class = TokenSerilizator
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        serializer.data.is_active = True # А надо ли с is_active - ведь без токена все равно нет доступа?
+        self.perform_create(serializer) 
+
+        if serializer.valdated_data.get('confirmation_code'):
+            #генерим джот и отправляем в Response
+            pass
+        else:
+            return Response(data={'Ошибка': 'Код некорректен'}, status=400) # status?
