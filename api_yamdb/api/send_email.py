@@ -1,15 +1,14 @@
 from django.core.mail import send_mail
-from api_yamdb.api_yamdb import settings
-import random
-from api_yamdb.reviews.models import User
+from api_yamdb import settings
+from django.contrib.auth.tokens import default_token_generator
 
 
-def send_email(email):
+def send_email(user):
     them = 'Ваш код подтверждения'
-    code = random.randint(1000, 9999)
-    text = f'Ваш код подверждения {code}'
+    confirmation_code = default_token_generator.make_token(user)
+    text = f'Ваш код подверждения {confirmation_code}'
     email_from = settings.EMAIL_BACKEND
-    send_mail(them, text, email_from, email)
-    user_obj = User.objects.get(emale=email)
-    user_obj.code = code
-    user_obj.save()
+    send_mail(them, text, email_from, [user.email])
+
+
+    

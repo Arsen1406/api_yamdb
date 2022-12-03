@@ -6,4 +6,6 @@ from reviews.models import User
 class AdminOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        return request.user.role == User.ADMIN
+        if not request.user.is_anonymous:
+            return request.user.role == User.ADMIN
+        return False

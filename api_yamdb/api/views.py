@@ -1,11 +1,11 @@
-from rest_framework import mixins, viewsets, filters, generics
+from rest_framework import mixins, viewsets, filters, generics, status
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.authtoken.models import Token 
+from rest_framework.authtoken.models import Token
 from rest_framework.authentication import SessionAuthentication, \
     BasicAuthentication
 from rest_framework.permissions import (
     IsAuthenticated,
-    IsAuthenticatedOrReadOnly
+    IsAuthenticatedOrReadOnly,
 )
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -13,13 +13,16 @@ from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment
 from .permissions import AdminOnly
+from .send_email import send_email
 from .serializers import (
     UserSerializer,
     TitlesSerializer,
     CommentSerializer,
     ReviewSerializer,
-    MeSerializer
+    MeSerializer,
+    SignUpSerilizator
 )
+
 
 #
 # class TokenViewSet(APIView):
@@ -93,3 +96,23 @@ class MeViewSet(mixins.RetrieveModelMixin,
 
     def get_queryset(self):
         return get_object_or_404(User, pk=self.request.user)
+
+
+class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    # permission_classes = [IsAuthenticated]
+    serializer_class = SignUpSerilizator
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        # user = serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        user = User.objects.get(username=serializer.data['username'])
+        send_email(user)
+
+        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+
+        # if User.objects.get(username=serializer.validated_data.get('username')).exists():
+        #     return Response(data={'Ошибка': 'Отсутствует обязательное поле, или оно не корректно'}, status=400)
+        # serializer.save()

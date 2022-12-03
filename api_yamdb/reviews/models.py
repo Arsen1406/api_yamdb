@@ -6,9 +6,9 @@ from django.db.models import CheckConstraint, Q, UniqueConstraint
 
 
 class User(AbstractUser):
-    USER = 'US'
-    MODERATOR = 'MD'
-    ADMIN = 'AD'
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
 
     ROLE_CHOICES = (
         (USER, 'user'),
@@ -31,7 +31,7 @@ class User(AbstractUser):
         default=USER,
         max_length=10
     )
-
+    is_active = models.BooleanField(default=False)
 
 class Genre(models.Model):
     name = models.CharField(max_length=256)
