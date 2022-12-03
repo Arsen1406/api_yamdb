@@ -1,8 +1,8 @@
 import re
-
+import datetime as dt
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
-from reviews.models import User, Title, Review, Comment, Genre, Category
+from reviews.models import User, Title, Review, Comment, Genre, Category, TitleGenre
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -31,19 +31,75 @@ class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = '__all__'
+        lookup_field = 'slug'
 
 
 class GenresSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = '__all__'
+        lookup_field = 'slug'
+
+
+class GenreList(serializers.Field):
+
+    class Meta:
+        model = Genre
+        fields = '__all__'
+
+    # def to_representation(self, data):
+    #     # for genre in data:
+    #     #     if not Genre.objects.get(slug=genre).exists():
+    #     #         raise serializers.ValidationError(f'Ошибка. Жанр {genre} не существует.')
+    #     return data
+
+    # def to_internal_value(self, data):
+    #     return data
+
 
 
 class TitlesSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(many=True, slug_field='slug', queryset=Genre.objects.all())
+    category = serializers.SlugRelatedField(slug_field='slug', queryset=Category.objects.all())
+
+    
     class Meta:
         model = Title
-        fields = '__all__'
+        fields = ('name', 'year', 'description', 'genre', 'category')
+        read_only_fields = ('genre',)
 
+    def create(self, validated_data):
+        genres = validated_data.pop('genre')
+        title = Title.objects.create(**validated_data)
+        for genre in genres:
+            current_genre = Genre.objects.get(slug=genre)
+            TitleGenre.objects.create(
+                genre=current_genre, title=title)
+        return title
+
+    def validate_year(self, value):
+        today = dt.datetime.today().year
+        if value > today:
+            raise serializers.ValidationError('Ошибка. Год из будущего!')
+        return value
+
+    # def validate_genre(self, genres):
+    #     for genre in genres:
+    #         if not Genre.objects.get(slug=genre).exists():
+    #             raise serializers.ValidationError(f'Ошибка. Жанр {genre} не существует.')
+    #     return genres
+
+    # def validate_category(self, category):
+    #     if not Category.objects.get(slug=category).exists():
+    #         raise serializers.ValidationError(f'Ошибка. Категории {category} не существует.')
+    #     return category
+
+    # def validate_genre(self, data):
+    #     for genre in data:
+    #         if not Genre.objects.filter(slug=genre).exists():
+    #             print('errrrrrrror!!!!!!')
+    #             raise serializers.ValidationError(f'Ошибка. Жанр {genre} не существует.')
+    #     return data
 
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:

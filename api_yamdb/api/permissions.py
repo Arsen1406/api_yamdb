@@ -18,3 +18,11 @@ class AdminSuperUserOnly(permissions.BasePermission):
         if request.user.role in role_admin_moder:
             return True
         return False
+
+
+class AutorizedOnly(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        if request.user.role != 'ANONIMUS':
+            return True
+        return False

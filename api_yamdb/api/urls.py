@@ -10,8 +10,6 @@ from .views import (
     GenresViewSet,
     CategoriesViewSet,
     TokenViewSet
-    UsersViewSet, MeViewSet,
-    SignUpViewSet, TokenViewSet,
     )
 
 

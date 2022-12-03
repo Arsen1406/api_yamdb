@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment, Genre, Category
-from .permissions import AdminOnly, AdminSuperUserOnly
+from .permissions import AdminOnly, AdminSuperUserOnly, AutorizedOnly
 from .send_email import send_email
 from .serializers import (
     UserSerializer, MeSerializer,
@@ -23,7 +23,6 @@ from .serializers import (
     GenresSerializer,
     CategoriesSerializer,
     TokenSerializer
-    SignUpSerilizator, TokenSerilizator
 )
 
 
@@ -53,9 +52,27 @@ from .serializers import (
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    # permission_classes = (IsAuthenticatedOrReadOnly,)
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
+
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     # print(serializer.validated_data['genre'])
+    #     # self.perform_create(serializer)
+    #     title = serializer.save()
+    #     headers = self.get_success_headers(serializer.data)
+
+    #     # for slug_genre in serializer.data['genre']:
+    #     #     title.genre.add(Genre.objects.get(slug=slug_genre))
+    #     #     title.save()
+
+    #     return Response(
+    #         serializer.data, 
+    #         status=status.HTTP_200_OK,
+    #         headers=headers
+    #     )
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -88,12 +105,17 @@ class CommentsViewSet(viewsets.ModelViewSet):
 class CategoriesViewSet(viewsets.ModelViewSet):
     serializer_class = CategoriesSerializer
     queryset = Category.objects.all()
+    pagination_class = LimitOffsetPagination
+    # permission_classes = (AutorizedOnly, )
+    lookup_field = 'slug'
 
 
 class GenresViewSet(viewsets.ModelViewSet):
     serializer_class = GenresSerializer
     queryset = Genre.objects.all()
-    # permission_classes = (IsAdminUser,)
+    pagination_class = LimitOffsetPagination
+    # permission_classes = (AutorizedOnly,)
+    lookup_field = 'slug'
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -162,17 +184,18 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     и confirmation_code на эндпоинт /api/v1/auth/token/, 
         в ответе наserializer_class = SignUpSerilizator"""
     lookup_field = 'username'
-    serializer_class = TokenSerilizator
-    
+    serializer_class = TokenSerializer
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer.data.is_active = True # А надо ли с is_active - ведь без токена все равно нет доступа?
-        self.perform_create(serializer) 
+        serializer.data.is_active = True  # А надо ли с is_active - ведь без токена все равно нет доступа?
+        self.perform_create(serializer)
 
         if serializer.valdated_data.get('confirmation_code'):
-            #генерим джот и отправляем в Response
+            # генерим джот и отправляем в Response
             pass
         else:
-            return Response(data={'Ошибка': 'Код некорректен'}, status=400) # status?
+            return Response(data={'Ошибка': 'Код некорректен'},
+                            status=400)  # status?
