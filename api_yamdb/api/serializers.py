@@ -1,6 +1,8 @@
 import re
+
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
-from reviews.models import User, Title, Review, Comment
+from reviews.models import User, Title, Review, Comment, Genre, Category
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -25,6 +27,18 @@ class MeSerializer(serializers.ModelSerializer):
         read_only_fields = ('role',)
 
 
+class CategoriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+
+
+class GenresSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = '__all__'
+
+
 class TitlesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
@@ -46,21 +60,34 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class SignUpSerilizator(serializers.ModelSerializer):
+class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email')
 
-    # def validate_email(self, value):
-    #     if re.compile('^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$').match(value) is None:
-    #         raise serializers.ValidationError(
-    #             'Email может содержать только буквы, цифры и @/./+/-/_"'
-    #         )
-    #     return value
+    def validate_usernamel(self, value):
+        if value.username == 'me':
+            raise serializers.ValidationError(
+                'Username может содержать только буквы, цифры и @/./+/-/_ и не может быть "me"'
+            )
+        return value
 
-    # def validate_usernamel(self, value):
-    #     if re.compile("^(?!me$)[\w.@+-]+").match(value) is None:
-    #         raise serializers.ValidationError(
-    #             'Username может содержать только буквы, цифры и @/./+/-/_ и не может быть "me"'
-    #         )
-    # return value
+
+class ConfirmationCode(serializers.Field):
+    def to_representation(self, value):
+        return value
+
+
+class TokenSerializer(serializers.ModelSerializer):
+    confirmation_code = ConfirmationCode()
+
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')
+
+    def validate_confirmation_code(self, confirmation_code):
+        """Возвращает true или false в зависимости
+        от правильности confirmation_code"""
+        # проверить доступ к объекту user - правильно ли self.user???
+        return default_token_generator.check_token(self.user,
+                                                   confirmation_code)
