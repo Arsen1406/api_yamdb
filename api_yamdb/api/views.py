@@ -56,6 +56,15 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
 
+    # def perform_create(self, serializer):
+    #     category_slug = self.request.data['category']
+    #     genre_slugs = self.request.data['genre']
+    #     list_genre = []
+    #     category = get_object_or_404(Category, slug=category_slug)
+    #     for genre_slug in genre_slugs:
+    #         list_genre.append(get_object_or_404(Genre, slug=genre_slug))
+    #     serializer.save(category=category, genre=list_genre)
+
     # def create(self, request, *args, **kwargs):
     #     serializer = self.get_serializer(data=request.data)
     #     serializer.is_valid(raise_exception=True)
