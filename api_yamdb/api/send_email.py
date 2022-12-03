@@ -10,5 +10,4 @@ def send_email(user):
     email_from = settings.EMAIL_BACKEND
     send_mail(them, text, email_from, [user.email])
 
-
     

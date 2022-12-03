@@ -1,24 +1,28 @@
 from rest_framework import mixins, viewsets, filters, generics, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.authtoken.models import Token
-from rest_framework.authentication import SessionAuthentication, \
-    BasicAuthentication
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
+    IsAdminUser
 )
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from reviews.models import User, Title, Review, Comment
-from .permissions import AdminOnly
+from reviews.models import User, Title, Review, Comment, Genre, Category
+from .permissions import AdminOnly, AdminSuperUserOnly
 from .send_email import send_email
 from .serializers import (
     UserSerializer, MeSerializer,
     TitlesSerializer,
     CommentSerializer,
     ReviewSerializer,
+    MeSerializer,
+    SignUpSerializer,
+    GenresSerializer,
+    CategoriesSerializer,
+    TokenSerializer
     SignUpSerilizator, TokenSerilizator
 )
 
@@ -49,6 +53,7 @@ from .serializers import (
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
 
@@ -70,11 +75,25 @@ class CommentsViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def perform_create(self, serializer):
-        serializer.save(self.request.user)
+        serializer.save(
+            author=self.request.user,
+            review=get_object_or_404(Review, id=self.kwargs.get('review_id'))
+        )
 
     def get_queryset(self):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
-        return review.comments
+        return review.comment.all()
+
+
+class CategoriesViewSet(viewsets.ModelViewSet):
+    serializer_class = CategoriesSerializer
+    queryset = Category.objects.all()
+
+
+class GenresViewSet(viewsets.ModelViewSet):
+    serializer_class = GenresSerializer
+    queryset = Genre.objects.all()
+    # permission_classes = (IsAdminUser,)
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -99,18 +118,39 @@ class MeViewSet(mixins.RetrieveModelMixin,
 
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     # permission_classes = [IsAuthenticated]
-    serializer_class = SignUpSerilizator
+    serializer_class = SignUpSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        # user = serializer.save()
         headers = self.get_success_headers(serializer.data)
         user = User.objects.get(username=serializer.data['username'])
         send_email(user)
 
-        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+        return Response(serializer.data, status=status.HTTP_200_OK,
+                        headers=headers)
+
+
+class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """Пользователь отправляет POST-запрос с параметрами username
+    и confirmation_code на эндпоинт /api/v1/auth/token/,
+        в ответе наserializer_class = SignUpSerilizator"""
+    lookup_field = 'username'
+    serializer_class = TokenSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        serializer.data.is_active = True  # А надо ли с is_active - ведь без токена все равно нет доступа?
+        self.perform_create(serializer)
+
+        if serializer.valdated_data.get('confirmation_code'):
+            # генерим джот и отправляем в Response
+            pass
+        return Response(data={'Ошибка': 'Код некорректен'},
+                        status=400)  # status?
 
         # if User.objects.get(username=serializer.validated_data.get('username')).exists():
         #     return Response(data={'Ошибка': 'Отсутствует обязательное поле, или оно не корректно'}, status=400)
