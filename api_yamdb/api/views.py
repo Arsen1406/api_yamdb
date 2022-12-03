@@ -6,13 +6,14 @@ from rest_framework.authentication import SessionAuthentication, \
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
+    IsAdminUser
 )
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from reviews.models import User, Title, Review, Comment
-from .permissions import AdminOnly
+from reviews.models import User, Title, Review, Comment, Genre, Category
+from .permissions import AdminOnly, AdminSuperUserOnly
 from .send_email import send_email
 from .serializers import (
     UserSerializer,
@@ -20,7 +21,9 @@ from .serializers import (
     CommentSerializer,
     ReviewSerializer,
     MeSerializer,
-    SignUpSerilizator
+    SignUpSerilizator,
+    GenresSerializer,
+    CategoriesSerializer
 )
 
 
@@ -50,6 +53,7 @@ from .serializers import (
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticatedOrReadOnly, )
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
 
@@ -76,6 +80,18 @@ class CommentsViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
         return review.comments
+
+
+class CategoriesViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAdminUser, )
+    serializer_class = CategoriesSerializer
+    queryset = Category.objects.all()
+class GenresViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAdminUser, )
+    serializer_class = GenresSerializer
+    queryset = Genre.objects.all()
+
+
 
 
 class UsersViewSet(viewsets.ModelViewSet):

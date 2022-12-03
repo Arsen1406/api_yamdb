@@ -1,6 +1,6 @@
 import re
 from rest_framework import serializers
-from reviews.models import User, Title, Review, Comment
+from reviews.models import User, Title, Review, Comment, Genre, Category
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -23,6 +23,18 @@ class MeSerializer(serializers.ModelSerializer):
         fields = '__all__'
         exclude = ('id',)
         read_only_fields = ('role',)
+
+
+class CategoriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+
+
+class GenresSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = '__all__'
 
 
 class TitlesSerializer(serializers.ModelSerializer):
