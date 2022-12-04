@@ -1,6 +1,7 @@
 from rest_framework import mixins, viewsets, filters, generics, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
@@ -14,17 +15,17 @@ from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import AdminOnly, AdminSuperUserOnly
 from .send_email import send_email
 from .serializers import (
+    SignUpSerializer, TokenSerializer,
     UserSerializer, MeSerializer,
+
     TitlesSerializer,
     CommentSerializer,
     ReviewSerializer,
-    MeSerializer,
-    SignUpSerializer,
     GenresSerializer,
     CategoriesSerializer,
-    TokenSerializer
-    SignUpSerilizator, TokenSerilizator
+    
 )
+from django.contrib.auth.tokens import default_token_generator
 
 
 #
@@ -84,11 +85,9 @@ class CommentsViewSet(viewsets.ModelViewSet):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
         return review.comment.all()
 
-
 class CategoriesViewSet(viewsets.ModelViewSet):
     serializer_class = CategoriesSerializer
     queryset = Category.objects.all()
-
 
 class GenresViewSet(viewsets.ModelViewSet):
     serializer_class = GenresSerializer
@@ -136,15 +135,18 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     """Пользователь отправляет POST-запрос с параметрами username
     и confirmation_code на эндпоинт /api/v1/auth/token/,
         в ответе наserializer_class = SignUpSerilizator"""
+    model = User
     lookup_field = 'username'
     serializer_class = TokenSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
+        print('!!!!!!'*5)
+        print(serializer.data.is_active)
+        print(serializer.data)
         serializer.data.is_active = True  # А надо ли с is_active - ведь без токена все равно нет доступа?
-        self.perform_create(serializer)
+        # self.perform_create(serializer)
 
         if serializer.valdated_data.get('confirmation_code'):
             # генерим джот и отправляем в Response
@@ -158,21 +160,16 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 
 
 class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    """Пользователь отправляет POST-запрос с параметрами username
-    и confirmation_code на эндпоинт /api/v1/auth/token/, 
-        в ответе наserializer_class = SignUpSerilizator"""
+    model = User
     lookup_field = 'username'
-    serializer_class = TokenSerilizator
-    
+    serializer_class = TokenSerializer
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        confirmation_code_is_valid = serializer.data['confirmation_code']
+        if confirmation_code_is_valid:
+            user = User.objects.get(username=serializer.data['username'])
+            token = str(RefreshToken.for_user(user).access_token)
+            return Response(data={'token': token}, status=200)
 
-        serializer.data.is_active = True # А надо ли с is_active - ведь без токена все равно нет доступа?
-        self.perform_create(serializer) 
-
-        if serializer.valdated_data.get('confirmation_code'):
-            #генерим джот и отправляем в Response
-            pass
-        else:
-            return Response(data={'Ошибка': 'Код некорректен'}, status=400) # status?

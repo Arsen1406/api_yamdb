@@ -1,5 +1,6 @@
 import re
 
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 from reviews.models import User, Title, Review, Comment, Genre, Category
@@ -74,21 +75,42 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class ConfirmationCode(serializers.Field):
+
     def to_representation(self, value):
-        return value
+        return super().to_representation(value)
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(data)
 
 
 class TokenSerializer(serializers.ModelSerializer):
-    confirmation_code = ConfirmationCode()
+    # confirmation_code = ConfirmationCode(required=True)
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
 
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
+        read_only_fields = ('username', 'confirmation_code')
+
+    def validate_username(self, username):
+        """Проверка существования пользователя."""
+        user_exists = User.objects.filter(username=username).exists()
+        if user_exists:
+            print('validate_username')
+            return username
+        else:
+            raise serializers.ValidationError(
+                f'Пользователя с username={username} не существует'
+            )
 
     def validate_confirmation_code(self, confirmation_code):
-        """Возвращает true или false в зависимости
-        от правильности confirmation_code"""
-        # проверить доступ к объекту user - правильно ли self.user???
-        return default_token_generator.check_token(self.user,
-                                                   confirmation_code)
-
+        """Проверка правильности confirmation_code."""
+        user = get_object_or_404(User, username=self.initial_data['username'])
+        token_is_valid = default_token_generator.check_token(
+            user, confirmation_code
+        )
+        if token_is_valid:
+            return True
+        else:
+            raise serializers.ValidationError('Код некорректен')
