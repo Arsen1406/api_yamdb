@@ -1,6 +1,6 @@
 import re
-
 from django.shortcuts import get_object_or_404
+import datetime as dt
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.validators import UniqueValidator
 from rest_framework import serializers, status
@@ -8,22 +8,56 @@ from reviews.models import User, Title, Review, Comment, Genre, Category
 
 
 
+
+class MeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+        exclude = ('id',)
+        read_only_fields = ('role',)
+
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ('name', 'slug')
 
 
 class GenresSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = '__all__'
+        fields = ('name', 'slug')
+
+
+class TitleCreateSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
+    genre = serializers.SlugRelatedField(
+        slug_field='slug',
+        many=True,
+        queryset=Genre.objects.all()
+    )
+
+    class Meta:
+        model = Title
+        fields = ('__all__')
+
+    def validate_year(self, value):
+        today = dt.datetime.today().year
+        if not (today >= value):
+            raise serializers.ValidationError('Год не может быть выше нынешнего!')
+        return value
 
 
 class TitlesSerializer(serializers.ModelSerializer):
+    category = CategoriesSerializer()
+    genre = GenresSerializer(many=True)
+
     class Meta:
         model = Title
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -122,6 +156,7 @@ class TokenSerializer(serializers.ModelSerializer):
                 status_code=status.HTTP_404_NOT_FOUND
             )
 
+
     # def validate_confirmation_code(self, confirmation_code):
     #     """Проверка правильности confirmation_code."""
         # print(self.initial_data['username'])
@@ -137,3 +172,10 @@ class TokenSerializer(serializers.ModelSerializer):
         #     return confirmation_code
         # else:
         #     raise serializers.ValidationError('Код некорректен')
+
+    def validate_confirmation_code(self, confirmation_code):
+        """Возвращает true или false в зависимости
+        от правильности confirmation_code"""
+        # проверить доступ к объекту user - правильно ли self.user???
+        return default_token_generator.check_token(self.user,
+                                                   confirmation_code)

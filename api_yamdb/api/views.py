@@ -7,6 +7,11 @@ from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly,
     IsAdminUser,
 )
+
+import requests
+from rest_framework.decorators import api_view
+from rest_framework_simplejwt.tokens import AccessToken
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,27 +27,37 @@ from .serializers import (
     UserSerializer, MeSerializer,
 
     TitlesSerializer,
+    TitleCreateSerializer,
     CommentSerializer,
     ReviewSerializer,
     GenresSerializer,
     CategoriesSerializer,
     
 )
+
 from django.contrib.auth.tokens import default_token_generator
 
 
+
 class TitleViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    # permission_classes = (IsAuthenticatedOrReadOnly,)
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return TitleCreateSerializer
+        return TitlesSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    # permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def perform_create(self, serializer):
-        serializer.save(self.request.user)
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
+
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('item_id'))
@@ -64,12 +79,15 @@ class CommentsViewSet(viewsets.ModelViewSet):
         return review.comment.all()
 
 class CategoriesViewSet(viewsets.ModelViewSet):
+
     serializer_class = CategoriesSerializer
+    lookup_field = 'slug'
     queryset = Category.objects.all()
 
 class GenresViewSet(viewsets.ModelViewSet):
     serializer_class = GenresSerializer
     queryset = Genre.objects.all()
+    lookup_field = 'slug'
     # permission_classes = (IsAdminUser,)
 
 
@@ -82,6 +100,15 @@ class UsersViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED,
+                            headers=headers)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class MeViewSet(mixins.RetrieveModelMixin,
                 mixins.UpdateModelMixin,
@@ -91,6 +118,7 @@ class MeViewSet(mixins.RetrieveModelMixin,
 
     def get_queryset(self):
         return get_object_or_404(User, pk=self.request.user)
+
 
 
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -128,3 +156,5 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             return Response(data={'token': token}, status=200)
         else:
             return Response(data={'Ошибка': 'Код неправильный.'}, status=400)
+
+        
