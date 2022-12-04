@@ -12,7 +12,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment, Genre, Category
-from .permissions import IsAdmin, AdminSuperUserOnly, IsSuperuser
+from .permissions import (
+    IsUser, IsModerator, IsAdmin, IsSuperuser,
+    AdminSuperUserOnly, 
+)
 from .send_email import send_email
 from .serializers import (
     SignUpSerializer, TokenSerializer,
@@ -84,7 +87,7 @@ class MeViewSet(mixins.RetrieveModelMixin,
                 mixins.UpdateModelMixin,
                 viewsets.GenericViewSet):
     serializer_class = MeSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsUser | IsModerator | IsAdmin | IsSuperuser]
 
     def get_queryset(self):
         return get_object_or_404(User, pk=self.request.user)
