@@ -32,6 +32,30 @@ from .serializers import (
 )
 
 
+#
+# class TokenViewSet(APIView):
+#     authentication_classes = [SessionAuthentication, BasicAuthentication]
+#     permission_classes = [IsAuthenticated]
+#
+#     def get(self, request, format=None):
+#         token = Token.objects.create(user=request.user)
+#         content = {
+#             'user': str(request.user),
+#             'auth': str(request.auth),
+#             'token': str(token.key)
+#         }
+#         return Response(content)
+#
+#
+# class SignUpViewSet(viewsets.ModelViewSet):
+#     queryset = User.objects.all()
+#     lookup_field = 'username'
+#     serializer_class = UserSerializer
+#     permission_classes = (AdminOnly,)
+#     pagination_class = LimitOffsetPagination
+#     filter_backends = (filters.SearchFilter,)
+#     search_fields = ('username',)
+
 
 class TitleViewSet(viewsets.ModelViewSet):
     # permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -116,34 +140,34 @@ class MeViewSet(mixins.RetrieveModelMixin,
         return get_object_or_404(User, pk=self.request.user)
 
 
-# class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-#     # permission_classes = [IsAuthenticated]
-#     serializer_class = SignUpSerializer
-#
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         self.perform_create(serializer)
-#         headers = self.get_success_headers(serializer.data)
-#         user = User.objects.get(username=serializer.data['username'])
-#         code = default_token_generator.make_token(user)
-#         send_email(user, code)
-#         return Response(serializer.data, status=status.HTTP_200_OK,
-#                         headers=headers)
+class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    # permission_classes = [IsAuthenticated]
+    serializer_class = SignUpSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        user = User.objects.get(username=serializer.data['username'])
+        code = default_token_generator.make_token(user)
+        send_email(user, code)
+        return Response(serializer.data, status=status.HTTP_200_OK,
+                        headers=headers)
 
 
 
-# @api_view(['POST'])
-# def get_token(request):
-#
-#     user = get_object_or_404(User, username=request.data['username'])
-#     code_control = default_token_generator.make_token(user)
-#     print(code_control, request.data['confirmation_code'])
-#     if request.data['confirmation_code'] == code_control:
-#         user.is_active = True
-#         token = AccessToken.for_user(user)
-#         return Response(token, status.HTTP_200_OK)
-#     return Response(request.data.confirmation_code, status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def get_token(request):
+
+    user = get_object_or_404(User, username=request.data['username'])
+    code_control = default_token_generator.make_token(user)
+    print(code_control, request.data['confirmation_code'])
+    if request.data['confirmation_code'] == code_control:
+        user.is_active = True
+        token = AccessToken.for_user(user)
+        return Response(token, status.HTTP_200_OK)
+    return Response(request.data.confirmation_code, status.HTTP_400_BAD_REQUEST)
 
     # serializer_class = TokenSerializer
 

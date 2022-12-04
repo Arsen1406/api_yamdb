@@ -5,17 +5,17 @@ from rest_framework import serializers
 from reviews.models import User, Title, Review, Comment, Genre, Category
 
 
-# class UserSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = ('username', 'email', 'password')
-#
-#     def validate_username(self, value):
-#         if re.compile("^(?!me$)[\w.@+-]+\z").match(value) is None:
-#             raise serializers.ValidationError(
-#                 'Username может содержать только буквы, цифры и @/./+/-/_'
-#             )
-#         return value
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password')
+
+    def validate_username(self, value):
+        if re.compile("^(?!me$)[\w.@+-]+\z").match(value) is None:
+            raise serializers.ValidationError(
+                'Username может содержать только буквы, цифры и @/./+/-/_'
+            )
+        return value
 
 
 class MeSerializer(serializers.ModelSerializer):
@@ -85,27 +85,27 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# class SignUpSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = ('username', 'email')
-#
-#     def validate_usernamel(self, value):
-#         if value.username == 'me':
-#             raise serializers.ValidationError(
-#                 'Username может содержать только буквы, цифры и @/./+/-/_ и не может быть "me"'
-#             )
-#         return value
+class SignUpSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email')
+
+    def validate_usernamel(self, value):
+        if value.username == 'me':
+            raise serializers.ValidationError(
+                'Username может содержать только буквы, цифры и @/./+/-/_ и не может быть "me"'
+            )
+        return value
 
 
-# class ConfirmationCode(serializers.Field):
-#     def to_representation(self, value):
-#         return value
-#
-#
-# class TokenSerializer(serializers.ModelSerializer):
-#     confirmation_code = ConfirmationCode(read_only=True)
-#
-#     class Meta:
-#         model = User
-#         fields = ('username', 'confirmation_code')
+class ConfirmationCode(serializers.Field):
+    def to_representation(self, value):
+        return value
+
+
+class TokenSerializer(serializers.ModelSerializer):
+    confirmation_code = ConfirmationCode(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')
