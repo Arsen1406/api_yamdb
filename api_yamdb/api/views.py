@@ -5,14 +5,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
-    IsAdminUser
+    IsAdminUser,
 )
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment, Genre, Category
-from .permissions import AdminOnly, AdminSuperUserOnly
+from .permissions import IsAdmin, AdminSuperUserOnly, IsSuperuser
 from .send_email import send_email
 from .serializers import (
     SignUpSerializer, TokenSerializer,
@@ -26,31 +26,6 @@ from .serializers import (
     
 )
 from django.contrib.auth.tokens import default_token_generator
-
-
-#
-# class TokenViewSet(APIView):
-#     authentication_classes = [SessionAuthentication, BasicAuthentication]
-#     permission_classes = [IsAuthenticated]
-#
-#     def get(self, request, format=None):
-#         token = Token.objects.create(user=request.user)
-#         content = {
-#             'user': str(request.user),
-#             'auth': str(request.auth),
-#             'token': str(token.key)
-#         }
-#         return Response(content)
-#
-#
-# class SignUpViewSet(viewsets.ModelViewSet):
-#     queryset = User.objects.all()
-#     lookup_field = 'username'
-#     serializer_class = UserSerializer
-#     permission_classes = (AdminOnly,)
-#     pagination_class = LimitOffsetPagination
-#     filter_backends = (filters.SearchFilter,)
-#     search_fields = ('username',)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -99,7 +74,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
-    permission_classes = (AdminOnly,)
+    permission_classes = [IsAdmin | IsSuperuser]
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
@@ -132,9 +107,6 @@ class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 
 
 class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    """Пользователь отправляет POST-запрос с параметрами username
-    и confirmation_code на эндпоинт /api/v1/auth/token/,
-        в ответе наserializer_class = SignUpSerilizator"""
     model = User
     lookup_field = 'username'
     serializer_class = TokenSerializer
@@ -142,34 +114,14 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        print('!!!!!!'*5)
-        print(serializer.data.is_active)
-        print(serializer.data)
-        serializer.data.is_active = True  # А надо ли с is_active - ведь без токена все равно нет доступа?
-        # self.perform_create(serializer)
-
-        if serializer.valdated_data.get('confirmation_code'):
-            # генерим джот и отправляем в Response
-            pass
-        return Response(data={'Ошибка': 'Код некорректен'},
-                        status=400)  # status?
-
-        # if User.objects.get(username=serializer.validated_data.get('username')).exists():
-        #     return Response(data={'Ошибка': 'Отсутствует обязательное поле, или оно не корректно'}, status=400)
-        # serializer.save()
-
-
-class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    model = User
-    lookup_field = 'username'
-    serializer_class = TokenSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        confirmation_code_is_valid = serializer.data['confirmation_code']
+        user = get_object_or_404(User, username=serializer.data['username'])
+        confirmation_code_is_valid = default_token_generator.check_token(
+            user,
+            serializer.data['confirmation_code']
+        )
         if confirmation_code_is_valid:
             user = User.objects.get(username=serializer.data['username'])
             token = str(RefreshToken.for_user(user).access_token)
             return Response(data={'token': token}, status=200)
-
+        else:
+            return Response(data={'Ошибка': 'Код неправильный.'}, status=400)
