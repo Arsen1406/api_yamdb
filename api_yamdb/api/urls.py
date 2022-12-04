@@ -9,7 +9,9 @@ from .views import (
     SignUpViewSet,
     GenresViewSet,
     CategoriesViewSet,
-    get_token
+    TokenViewSet
+    UsersViewSet, MeViewSet,
+    SignUpViewSet, TokenViewSet,
     )
 
 
@@ -25,8 +27,8 @@ router_v1.register(
     basename='comments'
 )
 
-router_v1.register(r'users/me/', MeViewSet, basename='me')
-router_v1.register(r'users', UsersViewSet, basename='users')
+router_v1.register(r'users/(^me\/{0,1}$)', MeViewSet, basename='me')
+router_v1.register(r'users', UsersViewSet)
 router_v1.register(r'auth/signup', SignUpViewSet, basename='signup')
 # router_v1.register(r'auth/token', get_token, basename='token')
 

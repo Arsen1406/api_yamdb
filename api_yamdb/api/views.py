@@ -19,7 +19,7 @@ from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import AdminOnly, AdminSuperUserOnly
 from .send_email import send_email
 from .serializers import (
-    UserSerializer,
+    UserSerializer, MeSerializer,
     TitlesSerializer,
     TitleCreateSerializer,
     CommentSerializer,
@@ -29,6 +29,7 @@ from .serializers import (
     GenresSerializer,
     CategoriesSerializer,
     TokenSerializer
+    SignUpSerilizator, TokenSerilizator
 )
 
 
@@ -133,26 +134,33 @@ class MeViewSet(mixins.RetrieveModelMixin,
 
 
 
-# @api_view(['POST'])
-# def get_token(request):
-#
-#     user = get_object_or_404(User, username=request.data['username'])
-#     code_control = default_token_generator.make_token(user)
-#     print(code_control, request.data['confirmation_code'])
-#     if request.data['confirmation_code'] == code_control:
-#         user.is_active = True
-#         token = AccessToken.for_user(user)
-#         return Response(token, status.HTTP_200_OK)
-#     return Response(request.data.confirmation_code, status.HTTP_400_BAD_REQUEST)
+        if serializer.valdated_data.get('confirmation_code'):
+            # генерим джот и отправляем в Response
+            pass
+        return Response(data={'Ошибка': 'Код некорректен'},
+                        status=400)  # status?
 
-    # serializer_class = TokenSerializer
+        # if User.objects.get(username=serializer.validated_data.get('username')).exists():
+        #     return Response(data={'Ошибка': 'Отсутствует обязательное поле, или оно не корректно'}, status=400)
+        # serializer.save()
 
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     user = get_object_or_404(User, username=serializer.data['username'])
-    #     if default_token_generator.make_token(user) == serializer.data['confirmation_code']:
-    #         user.is_active = True
-    #         token = AccessToken.for_user(user=user)
-    #         return Response({'token': token}, status.HTTP_200_OK)
-    #     return Response(serializer.error, status.HTTP_400_BAD_REQUEST)
+
+class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """Пользователь отправляет POST-запрос с параметрами username
+    и confirmation_code на эндпоинт /api/v1/auth/token/, 
+        в ответе наserializer_class = SignUpSerilizator"""
+    lookup_field = 'username'
+    serializer_class = TokenSerilizator
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        serializer.data.is_active = True # А надо ли с is_active - ведь без токена все равно нет доступа?
+        self.perform_create(serializer) 
+
+        if serializer.valdated_data.get('confirmation_code'):
+            #генерим джот и отправляем в Response
+            pass
+        else:
+            return Response(data={'Ошибка': 'Код некорректен'}, status=400) # status?
