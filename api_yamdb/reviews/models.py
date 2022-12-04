@@ -10,11 +10,11 @@ class User(AbstractUser):
     MODERATOR = 'MD'
     ADMIN = 'AD'
 
-    ROLE_CHOICES = (
+    ROLE_CHOICES = [
         (USER, 'user'),
         (MODERATOR, 'moderator'),
         (ADMIN, 'admin'),
-    )
+    ]
     email = models.EmailField(
         verbose_name='email address',
         max_length=255,
@@ -26,15 +26,13 @@ class User(AbstractUser):
     )
     role = models.CharField(
         choices=ROLE_CHOICES,
-        blank=True,
-        null=True,
         default=USER,
-        max_length=10
+        max_length=9
     )
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=20)
     slug = models.SlugField(unique=True, max_length=50)
 
     def __str__(self):
@@ -42,7 +40,7 @@ class Genre(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=20)
     slug = models.SlugField(unique=True, max_length=50)
 
     def __str__(self):
@@ -110,7 +108,8 @@ class Review(models.Model):
             # CheckConstraint(check=Q(score__range=(1, 10)), name='valid_score'),
             UniqueConstraint(fields=['author', 'title'], name='rating_once')
         ]
-
+    def __str__(self):
+        return f'{self.user} подписан на {self.following}'
 
 class Comment(models.Model):
     text = models.TextField()
@@ -120,6 +119,5 @@ class Comment(models.Model):
         Review, on_delete=models.CASCADE, related_name='comments')
     pub_date = models.DateTimeField(
         'Дата добавления',
-        auto_now_add=True,
-        db_index=True
+        auto_now_add=True
     )
