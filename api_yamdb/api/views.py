@@ -5,7 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
-    IsAdminUser,
+    IsAdminUser
 )
 
 import requests
@@ -19,7 +19,7 @@ from rest_framework.views import APIView
 from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import (
     IsUser, IsModerator, IsAdmin, IsSuperuser,
-    AdminSuperUserOnly, 
+    AdminSuperUserOnly, AdminSuperUserOrReadOnly, IsUserGet
 )
 from .send_email import send_email
 from .serializers import (
@@ -32,15 +32,12 @@ from .serializers import (
     ReviewSerializer,
     GenresSerializer,
     CategoriesSerializer,
-    
+
 )
-
-from django.contrib.auth.tokens import default_token_generator
-
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    # permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (AdminSuperUserOrReadOnly, )
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
 
@@ -52,12 +49,11 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    # permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, )
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
         serializer.save(author=self.request.user, title=title)
-
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('item_id'))
@@ -78,17 +74,19 @@ class CommentsViewSet(viewsets.ModelViewSet):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
         return review.comment.all()
 
-class CategoriesViewSet(viewsets.ModelViewSet):
 
+class CategoriesViewSet(viewsets.ModelViewSet):
     serializer_class = CategoriesSerializer
+    permission_classes = (AdminSuperUserOrReadOnly,)
     lookup_field = 'slug'
     queryset = Category.objects.all()
+
 
 class GenresViewSet(viewsets.ModelViewSet):
     serializer_class = GenresSerializer
     queryset = Genre.objects.all()
     lookup_field = 'slug'
-    # permission_classes = (IsAdminUser,)
+    permission_classes = (AdminSuperUserOrReadOnly,)
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -114,15 +112,13 @@ class MeViewSet(mixins.RetrieveModelMixin,
                 mixins.UpdateModelMixin,
                 viewsets.GenericViewSet):
     serializer_class = MeSerializer
-    permission_classes = [IsUser | IsModerator | IsAdmin | IsSuperuser]
+    permission_classes = (IsUserGet, IsModerator, IsAdmin, IsSuperuser)
 
     def get_queryset(self):
         return get_object_or_404(User, pk=self.request.user)
 
 
-
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    # permission_classes = [IsAuthenticated]
     serializer_class = SignUpSerializer
 
     def create(self, request, *args, **kwargs):
@@ -156,5 +152,3 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             return Response(data={'token': token}, status=200)
         else:
             return Response(data={'Ошибка': 'Код неправильный.'}, status=400)
-
-        

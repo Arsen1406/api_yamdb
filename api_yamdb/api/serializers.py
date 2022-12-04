@@ -169,9 +169,10 @@ class TokenSerializer(serializers.ModelSerializer):
     # else:
     #     raise serializers.ValidationError('Код некорректен')
 
-    def validate_confirmation_code(self, confirmation_code):
-        """Возвращает true или false в зависимости
-        от правильности confirmation_code"""
-        # проверить доступ к объекту user - правильно ли self.user???
-        return default_token_generator.check_token(self.user,
-                                                   confirmation_code)
+    # def validate_confirmation_code(self, confirmation_code):
+    #     """Возвращает true или false в зависимости
+    #     от правильности confirmation_code"""
+    #     # проверить доступ к объекту user - правильно ли self.user???
+    #     user = get_object_or_404(User, username=self.initial_data.get('username'))
+    #     return default_token_generator.check_token(user,
+    #                                                confirmation_code)
