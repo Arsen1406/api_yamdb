@@ -62,27 +62,6 @@ class Title(models.Model):
         null=True
     )
 
-    # class Book(models.Model):
-    #     ...
-    #     rating = models.IntegerField(default=0, null=True, blank=True)
-
-    # class Vote(models.Model):
-    #     # можно сделать choices типа like/dislike или от одного до пяти, если звёзды будут, но это уже смотрите по ситуации
-    #     value = models.SmallIntegerField()
-    #     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    #     book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    #     voted_on = models.DateTimeField(auto_now=True)
-
-    #     class Meta:
-    #         # а вот эта команда и не даст повторно голосовать
-    #         unique_together = ('user', 'book')
-
-    # @property
-    # def average_rating(self):
-    #     if hasattr(self, '_average_rating'):
-    #         return self._average_rating
-    #     return self.reviews.aggregate(Avg('score'))
-
     def __str__(self):
         return self.name
 

@@ -11,6 +11,15 @@ class IsUser(permissions.BasePermission):
         return False
 
 
+class IsUserGet(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        methods = ('GET', 'PATCH')
+        if not request.user.is_anonymous and request.method in methods:
+            return True
+        return False
+
+
 class IsModerator(permissions.BasePermission):
 
     def has_permission(self, request, view):
@@ -36,7 +45,16 @@ class IsSuperuser(permissions.BasePermission):
 class AdminSuperUserOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        role_admin_moder = ('SUPRUSER', 'ADMIN')
-        if request.user.role in role_admin_moder:
-            return True
-        return False
+        role_admin = ('SUPRUSER', 'ADMIN')
+        if request.user.is_anonymous or request.user.role not in role_admin:
+            return False
+        return True
+
+
+class AdminSuperUserOrReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        role_adm = ('SUPRUSER', 'ADMIN')
+        if request.method != 'GET':
+            if request.user.is_anonymous or request.user.role not in role_adm:
+                return False
+        return True
