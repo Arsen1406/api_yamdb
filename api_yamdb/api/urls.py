@@ -30,11 +30,11 @@ router_v1.register(
 router_v1.register(r'users/(^me\/{0,1}$)', MeViewSet, basename='me')
 router_v1.register(r'users', UsersViewSet)
 router_v1.register(r'auth/signup', SignUpViewSet, basename='signup')
-# router_v1.register(r'auth/token', get_token, basename='token')
+router_v1.register(r'auth/token', TokenViewSet, basename='token')
 
 urlpatterns = [
     path('v1/', include(router_v1.urls)),
     # path('v1/auth/email/', send_confirmation_code),
-    path('v1/auth/token/', get_token),
+    # path('v1/auth/token/', get_token),
     # path('v1/users/me/', UserInfo.as_view()),
 ]

@@ -7,14 +7,13 @@ from rest_framework import serializers, status
 from reviews.models import User, Title, Review, Comment, Genre, Category
 
 
-
-
 class MeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
         exclude = ('id',)
         read_only_fields = ('role',)
+
 
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -46,7 +45,8 @@ class TitleCreateSerializer(serializers.ModelSerializer):
     def validate_year(self, value):
         today = dt.datetime.today().year
         if not (today >= value):
-            raise serializers.ValidationError('Год не может быть выше нынешнего!')
+            raise serializers.ValidationError(
+                'Год не может быть выше нынешнего!')
         return value
 
 
@@ -57,7 +57,6 @@ class TitlesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = ('id', 'name', 'year', 'description', 'genre', 'category')
-
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -73,9 +72,6 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = '__all__'
-
-
-
 
 
 class MeSerializer(serializers.ModelSerializer):
@@ -124,19 +120,20 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'Такой email уже существует.'
             )
-        return email           
+        return email
+
 
 class UserSerializer(SignUpSerializer):
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role')
         # exclude = ('id',)
 
 
-
 class TokenSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required= True)
-    confirmation_code = serializers.CharField(required= True)
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
 
     class Meta:
         model = User
@@ -156,22 +153,21 @@ class TokenSerializer(serializers.ModelSerializer):
                 status_code=status.HTTP_404_NOT_FOUND
             )
 
-
     # def validate_confirmation_code(self, confirmation_code):
     #     """Проверка правильности confirmation_code."""
-        # print(self.initial_data['username'])
+    # print(self.initial_data['username'])
 
-        # user = get_object_or_404(
-        #     User,
-        #     username=self.initial_data.get('username')
-        # )
-        # token_is_valid = default_token_generator.check_token(
-        #     user, confirmation_code
-        # )
-        # if token_is_valid:
-        #     return confirmation_code
-        # else:
-        #     raise serializers.ValidationError('Код некорректен')
+    # user = get_object_or_404(
+    #     User,
+    #     username=self.initial_data.get('username')
+    # )
+    # token_is_valid = default_token_generator.check_token(
+    #     user, confirmation_code
+    # )
+    # if token_is_valid:
+    #     return confirmation_code
+    # else:
+    #     raise serializers.ValidationError('Код некорректен')
 
     def validate_confirmation_code(self, confirmation_code):
         """Возвращает true или false в зависимости
