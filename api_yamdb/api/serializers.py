@@ -1,22 +1,9 @@
 import re
-
+import datetime as dt
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 from reviews.models import User, Title, Review, Comment, Genre, Category
 
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
-        exclude = ('id',)
-
-    def validate_username(self, value):
-        if re.compile("^(?!me$)[\w.@+-]+\z").match(value) is None:
-            raise serializers.ValidationError(
-                'Username может содержать только буквы, цифры и @/./+/-/_'
-            )
-        return value
 
 
 class MeSerializer(serializers.ModelSerializer):
@@ -30,19 +17,45 @@ class MeSerializer(serializers.ModelSerializer):
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ('name', 'slug')
 
 
 class GenresSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = '__all__'
+        fields = ('name', 'slug')
+
+
+class TitleCreateSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
+    genre = serializers.SlugRelatedField(
+        slug_field='slug',
+        many=True,
+        queryset=Genre.objects.all()
+    )
+
+    class Meta:
+        model = Title
+        fields = ('__all__')
+
+    def validate_year(self, value):
+        today = dt.datetime.today().year
+        if not (today >= value):
+            raise serializers.ValidationError('Год не может быть выше нынешнего!')
+        return value
 
 
 class TitlesSerializer(serializers.ModelSerializer):
+    category = CategoriesSerializer()
+    genre = GenresSerializer(many=True)
+
     class Meta:
         model = Title
-        fields = '__all__'
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -91,4 +104,3 @@ class TokenSerializer(serializers.ModelSerializer):
         # проверить доступ к объекту user - правильно ли self.user???
         return default_token_generator.check_token(self.user,
                                                    confirmation_code)
-
