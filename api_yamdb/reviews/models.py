@@ -31,7 +31,7 @@ class User(AbstractUser):
         default=USER,
         max_length=10
     )
-    is_active = models.BooleanField(default=False)
+    # is_active = models.BooleanField(default=False)
 
 
 class Genre(models.Model):
