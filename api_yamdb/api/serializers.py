@@ -5,6 +5,7 @@ from rest_framework import serializers
 from reviews.models import User, Title, Review, Comment, Genre, Category
 
 
+<<<<<<< HEAD
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -17,6 +18,8 @@ class UserSerializer(serializers.ModelSerializer):
             )
         return value
 
+=======
+>>>>>>> 613b87db8da699c6bc70147244799684ab777d2a
 
 class MeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -104,8 +107,22 @@ class ConfirmationCode(serializers.Field):
 
 
 class TokenSerializer(serializers.ModelSerializer):
+<<<<<<< HEAD
     confirmation_code = ConfirmationCode(read_only=True)
+=======
+    confirmation_code = ConfirmationCode()
+>>>>>>> 613b87db8da699c6bc70147244799684ab777d2a
 
     class Meta:
         model = User
         fields = ('username', 'confirmation_code')
+<<<<<<< HEAD
+=======
+
+    def validate_confirmation_code(self, confirmation_code):
+        """Возвращает true или false в зависимости
+        от правильности confirmation_code"""
+        # проверить доступ к объекту user - правильно ли self.user???
+        return default_token_generator.check_token(self.user,
+                                                   confirmation_code)
+>>>>>>> 613b87db8da699c6bc70147244799684ab777d2a
