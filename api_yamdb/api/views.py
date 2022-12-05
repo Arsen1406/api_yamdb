@@ -24,8 +24,7 @@ from .permissions import (
 )
 from .send_email import send_email
 from .serializers import (
-    SignUpSerializer, TokenSerializer,
-    UserSerializer, MeSerializer,
+    SignUpSerializer, TokenSerializer, UserSerializer,
 
     TitlesSerializer,
     TitleCreateSerializer,
@@ -91,11 +90,9 @@ class GenresViewSet(viewsets.ModelViewSet):
 
 
 class UsersViewSet(viewsets.ModelViewSet):
-    # queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
     permission_classes = [UserOrModeratorSelfGetPatchOnly | IsAdmin | IsSuperuser]
-    # permission_classes = [IsAuthenticated]
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
@@ -117,24 +114,10 @@ class UsersViewSet(viewsets.ModelViewSet):
             self.kwargs['username'] = self.request.user
         return User.objects.all()
 
-
-# class MeViewSet(mixins.RetrieveModelMixin,
-#                 mixins.UpdateModelMixin,
-#                 viewsets.GenericViewSet):
-
-# class MeViewSet(mixins.RetrieveModelMixin,
-#                 mixins.UpdateModelMixin,
-#                 viewsets.GenericViewSet):
-#     lookup_field = 'username'
-#     serializer_class = MeSerializer
-#     # permission_classes = (AllowAny,)
-#     permission_classes = (IsAuthenticated,)
-#     # permission_classes = [IsUser, IsModerator, IsAdmin, IsSuperuser]
-
-#     def get_queryset(self):
-#         print(self.request.user)
-#         print(get_object_or_404(User, username=self.request.user))
-#         return get_object_or_404(User, username=self.request.user)
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):

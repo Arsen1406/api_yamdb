@@ -7,14 +7,6 @@ from rest_framework import serializers, status
 from reviews.models import User, Title, Review, Comment, Genre, Category
 
 
-class MeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
-        exclude = ('id',)
-        read_only_fields = ('role',)
-
-
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -100,6 +92,15 @@ class SignUpSerializer(serializers.ModelSerializer):
             )
         return email
 
+    def validate_username(self, username):
+        """Проверка на создание пользователя ME."""
+        if username.lower() == 'me':
+            raise serializers.ValidationError(
+                'Пользователя с username=me нельзя создавать.',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return username
+
 
 class UserSerializer(SignUpSerializer):
     class Meta:
@@ -134,5 +135,5 @@ class TokenSerializer(serializers.ModelSerializer):
         else:
             raise serializers.ValidationError(
                 f'Пользователя с username={username} не существует',
-                status_code=status.HTTP_404_NOT_FOUND
+                code=status.HTTP_404_NOT_FOUND
             )
