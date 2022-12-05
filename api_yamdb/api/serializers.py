@@ -60,6 +60,10 @@ class TitlesSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True)
+    score = serializers.IntegerField(max_value=10, min_value=1)
+
     class Meta:
         model = Review
         fields = '__all__'

@@ -25,7 +25,6 @@ from .send_email import send_email
 from .serializers import (
     SignUpSerializer, TokenSerializer,
     UserSerializer, MeSerializer,
-
     TitlesSerializer,
     TitleCreateSerializer,
     CommentSerializer,
@@ -34,6 +33,7 @@ from .serializers import (
     CategoriesSerializer,
 
 )
+
 
 class TitleFilter(rest_framework.FilterSet):
     name = rest_framework.CharFilter(field_name='name', lookup_expr='contains')
@@ -44,8 +44,9 @@ class TitleFilter(rest_framework.FilterSet):
         model = Title
         fields = ('category', 'genre', 'year', 'name')
 
+
 class TitleViewSet(viewsets.ModelViewSet):
-    permission_classes = (AdminOrReadOnly, )
+    permission_classes = (AdminOrReadOnly,)
     queryset = Title.objects.all()
     pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
@@ -57,19 +58,17 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitlesSerializer
 
 
-
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
-    def get_title(self):
-        return get_object_or_404(Title, id=self.kwargs.get('title_id'))
-    
     def get_queryset(self):
-        return self.get_title().reviews.all()
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        return title.reviews.all()
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, title=self.get_title())
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentsViewSet(viewsets.ModelViewSet):

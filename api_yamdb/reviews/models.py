@@ -84,8 +84,10 @@ class Review(models.Model):
 
     class Meta:
         constraints = [
-            # CheckConstraint(check=Q(score__range=(1, 10)), name='valid_score'),
-            UniqueConstraint(fields=['author', 'title'], name='rating_once')
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='rating_once'
+            )
         ]
 
 

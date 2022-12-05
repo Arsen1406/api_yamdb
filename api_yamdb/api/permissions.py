@@ -52,7 +52,8 @@ class IsSuperuser(permissions.BasePermission):
 
 class AdminOnly(permissions.BasePermission):
     def has_permission(self, request, view):
-            return hasattr(request.user, 'role') and request.user.role == 'admin'
+        return hasattr(request.user, 'role') and request.user.role == 'admin'
+
 
 # class AdminSuperUserOrReadOnly(permissions.BasePermission):
 #     def has_permission(self, request, view):
@@ -65,5 +66,6 @@ class AdminOnly(permissions.BasePermission):
 class AdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.method != 'GET':
-            return hasattr(request.user, 'role') and request.user.role == 'admin'
+            return hasattr(request.user,
+                           'role') and request.user.role == 'admin'
         return True
