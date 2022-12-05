@@ -5,7 +5,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
-    IsAdminUser
+    IsAdminUser,
+    AllowAny
 )
 
 import requests
@@ -18,7 +19,7 @@ from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import (
-    IsUser, IsModerator, IsAdmin, IsSuperuser,
+    IsUser, IsModerator, IsAdmin, IsSuperuser, UserOrModeratorSelfGetPatchOnly,
     AdminSuperUserOnly, AdminSuperUserOrReadOnly, IsUserGet
 )
 from .send_email import send_email
@@ -90,10 +91,11 @@ class GenresViewSet(viewsets.ModelViewSet):
 
 
 class UsersViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    # queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
-    permission_classes = [IsAdmin | IsSuperuser]
+    permission_classes = [UserOrModeratorSelfGetPatchOnly | IsAdmin | IsSuperuser]
+    # permission_classes = [IsAuthenticated]
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
@@ -103,19 +105,36 @@ class UsersViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED,
-                            headers=headers)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class MeViewSet(mixins.RetrieveModelMixin,
-                mixins.UpdateModelMixin,
-                viewsets.GenericViewSet):
-    serializer_class = MeSerializer
-    permission_classes = (IsUserGet, IsModerator, IsAdmin, IsSuperuser)
-
     def get_queryset(self):
-        return get_object_or_404(User, pk=self.request.user)
+        if str(self.kwargs.get('username')).lower() == 'me':
+            self.kwargs['username'] = self.request.user
+        return User.objects.all()
+
+
+# class MeViewSet(mixins.RetrieveModelMixin,
+#                 mixins.UpdateModelMixin,
+#                 viewsets.GenericViewSet):
+
+# class MeViewSet(mixins.RetrieveModelMixin,
+#                 mixins.UpdateModelMixin,
+#                 viewsets.GenericViewSet):
+#     lookup_field = 'username'
+#     serializer_class = MeSerializer
+#     # permission_classes = (AllowAny,)
+#     permission_classes = (IsAuthenticated,)
+#     # permission_classes = [IsUser, IsModerator, IsAdmin, IsSuperuser]
+
+#     def get_queryset(self):
+#         print(self.request.user)
+#         print(get_object_or_404(User, username=self.request.user))
+#         return get_object_or_404(User, username=self.request.user)
 
 
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -149,6 +168,8 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if confirmation_code_is_valid:
             user = User.objects.get(username=serializer.data['username'])
             token = str(RefreshToken.for_user(user).access_token)
+            # token = RefreshToken.for_user(user).access_token
+            # print(token)
             return Response(data={'token': token}, status=200)
         else:
             return Response(data={'Ошибка': 'Код неправильный.'}, status=400)
