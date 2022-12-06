@@ -21,11 +21,12 @@ from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import (
-    IsUser, IsModerator, IsAdmin, IsSuperuser, AdminOrReadOnly, IsUserGet,ReviewPermission
-    )
+    IsUser, IsModerator, IsAdmin, IsSuperuser, AdminOrReadOnly, IsUserGet,
+    ReviewPermission,
     IsUser, IsModerator, IsAdmin, IsSuperuser, UserOrModeratorSelfGetPatchOnly,
     IsUserGet, AdminOrReadOnly
 )
+
 from .send_email import send_email
 from .serializers import (
     SignUpSerializer, TokenSerializer,
@@ -65,8 +66,17 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,ReviewPermission)
+    permission_classes = (IsAuthenticatedOrReadOnly, ReviewPermission)
 
+    # def update(self, request, *args, **kwargs):
+    #     review = Review.objects.get(authot=self.kwargs.get('title_id'))
+    #     if request.data.user == review.author:
+    #         partial = kwargs.pop('partial', False)
+    #         instance = self.get_object()
+    #         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+    #         serializer.is_valid(raise_exception=True)
+    #         self.perform_update(serializer)
+    #     raise KeyError('Вы можете исправлять только свои отзывы')
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -81,7 +91,6 @@ class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, ReviewPermission)
 
-
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
@@ -90,7 +99,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
-        return review.comment.all()
+        return review.comments.all()
 
 
 class CategoriesViewSet(

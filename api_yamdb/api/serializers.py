@@ -1,4 +1,6 @@
 import re
+
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 import datetime as dt
 from django.contrib.auth.tokens import default_token_generator
@@ -45,10 +47,18 @@ class TitleCreateSerializer(serializers.ModelSerializer):
 class TitlesSerializer(serializers.ModelSerializer):
     category = CategoriesSerializer()
     genre = GenresSerializer(many=True)
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category')
+
+    def get_rating(self, obj):
+        rating = obj.reviews.aggregate(Avg('score')).get('score_avg')
+        if not rating:
+            return rating
+        return round(rating, 1)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -80,7 +90,19 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ('id', 'text', 'author', 'pub_date')
+
+    def validate_review(self, data):
+        if self.context['request'].method != 'PATCH':
+            return data
+        comment_id = self.context['view'].kwargs.get('comment_id')
+        comment = Comment.objects.get(id=comment_id)
+        author = self.context['request'].user
+        if comment.author != author:
+            raise serializers.ValidationError(
+                'Вы можете редактировать только свои комментарии.'
+            )
+        return data
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -130,7 +152,7 @@ class UserSerializer(SignUpSerializer):
         authenticated_user_role = self.context['request'].user.role
         is_superuser = self.context['request'].user.is_superuser
         if (authenticated_user_role in [User.USER, User.MODERATOR]
-           and not is_superuser):
+                and not is_superuser):
             return authenticated_user_role
         return role
 
