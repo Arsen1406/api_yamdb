@@ -67,6 +67,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, ReviewPermission)
+    pagination_class = LimitOffsetPagination
 
     # def update(self, request, *args, **kwargs):
     #     review = Review.objects.get(authot=self.kwargs.get('title_id'))
@@ -90,6 +91,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, ReviewPermission)
+    pagination_class = LimitOffsetPagination
 
     def perform_create(self, serializer):
         serializer.save(
