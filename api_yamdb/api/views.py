@@ -1,3 +1,4 @@
+from django_filters import rest_framework
 from rest_framework import mixins, viewsets, filters, generics, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.authtoken.models import Token
@@ -5,9 +6,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
-    IsAdminUser
+    IsAdminUser,
+    AllowAny
 )
-
 from django_filters import rest_framework
 from django_filters.rest_framework import DjangoFilterBackend
 import requests
@@ -22,11 +23,13 @@ from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import (
     IsUser, IsModerator, IsAdmin, IsSuperuser, AdminOrReadOnly, IsUserGet,ReviewPermission
     )
+    IsUser, IsModerator, IsAdmin, IsSuperuser, UserOrModeratorSelfGetPatchOnly,
+    IsUserGet, AdminOrReadOnly
+)
 from .send_email import send_email
 from .serializers import (
     SignUpSerializer, TokenSerializer,
-    UserSerializer, MeSerializer,
-
+    UserSerializer,
     TitlesSerializer,
     TitleCreateSerializer,
     CommentSerializer,
@@ -35,6 +38,7 @@ from .serializers import (
     CategoriesSerializer,
 
 )
+
 
 class TitleFilter(rest_framework.FilterSet):
     name = rest_framework.CharFilter(field_name='name', lookup_expr='contains')
@@ -45,8 +49,9 @@ class TitleFilter(rest_framework.FilterSet):
         model = Title
         fields = ('category', 'genre', 'year', 'name')
 
+
 class TitleViewSet(viewsets.ModelViewSet):
-    permission_classes = (AdminOrReadOnly, )
+    permission_classes = (AdminOrReadOnly,)
     queryset = Title.objects.all()
     pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
@@ -56,7 +61,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.action == 'create' or self.action == 'partial_update':
             return TitleCreateSerializer
         return TitlesSerializer
-
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -120,10 +124,10 @@ class GenresViewSet(
 
 
 class UsersViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
     lookup_field = 'username'
     serializer_class = UserSerializer
-    permission_classes = [IsAdmin | IsSuperuser]
+    permission_classes = [
+        UserOrModeratorSelfGetPatchOnly | IsAdmin | IsSuperuser]
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
@@ -133,19 +137,22 @@ class UsersViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED,
-                            headers=headers)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class MeViewSet(mixins.RetrieveModelMixin,
-                mixins.UpdateModelMixin,
-                viewsets.GenericViewSet):
-    serializer_class = MeSerializer
-    permission_classes = (IsUserGet, IsModerator, IsAdmin, IsSuperuser)
-
     def get_queryset(self):
-        return get_object_or_404(User, pk=self.request.user)
+        if str(self.kwargs.get('username')).lower() == 'me':
+            self.kwargs['username'] = self.request.user
+        return User.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -179,6 +186,8 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if confirmation_code_is_valid:
             user = User.objects.get(username=serializer.data['username'])
             token = str(RefreshToken.for_user(user).access_token)
+            # token = RefreshToken.for_user(user).access_token
+            # print(token)
             return Response(data={'token': token}, status=200)
         else:
             return Response(data={'Ошибка': 'Код неправильный.'}, status=400)
