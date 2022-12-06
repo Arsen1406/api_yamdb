@@ -116,7 +116,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class SignUpSerializer(serializers.ModelSerializer):
     """Серилизатор для регистрации новых пользователей."""
     username = serializers.RegexField(
-        '^[\w.@+-]+',
+        r'^[\w.@+-]+',
         max_length=150,
         min_length=None,
         allow_blank=False,
