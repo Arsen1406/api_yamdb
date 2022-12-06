@@ -7,6 +7,7 @@ from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly,
     IsAdminUser
 )
+
 from django_filters import rest_framework
 from django_filters.rest_framework import DjangoFilterBackend
 import requests
@@ -19,8 +20,8 @@ from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import (
-    IsUser, IsModerator, IsAdmin, IsSuperuser, AdminOrReadOnly, IsUserGet
-)
+    IsUser, IsModerator, IsAdmin, IsSuperuser, AdminOrReadOnly, IsUserGet,ReviewPermission
+    )
 from .send_email import send_email
 from .serializers import (
     SignUpSerializer, TokenSerializer,
@@ -52,7 +53,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == 'create' or self.action == 'partial_update':
             return TitleCreateSerializer
         return TitlesSerializer
 
@@ -60,21 +61,22 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticatedOrReadOnly,ReviewPermission)
 
-    def get_title(self):
-        return get_object_or_404(Title, id=self.kwargs.get('title_id'))
-    
+
     def get_queryset(self):
-        return self.get_title().reviews.all()
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        return title.reviews.all()
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, title=self.get_title())
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, ReviewPermission)
+
 
     def perform_create(self, serializer):
         serializer.save(
