@@ -9,4 +9,3 @@ def send_email(user):
     text = f'Ваш код подверждения: {confirmation_code}'
     email_from = settings.EMAIL_BACKEND
     send_mail(them, text, email_from, [user.email])
-

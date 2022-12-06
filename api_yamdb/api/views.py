@@ -1,33 +1,21 @@
-from django_filters import rest_framework
-from rest_framework import mixins, viewsets, filters, generics, status
+from rest_framework import mixins, viewsets, filters, status
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-    IsAdminUser,
-    AllowAny
-)
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters import rest_framework
 from django_filters.rest_framework import DjangoFilterBackend
-import requests
-from rest_framework.decorators import api_view
-from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.views import APIView
-
+from .send_email import send_email
 from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import (
-    IsUser, IsModerator, IsAdmin, IsSuperuser, AdminOrReadOnly, IsUserGet,
     ReviewPermission,
-    IsUser, IsModerator, IsAdmin, IsSuperuser, UserOrModeratorSelfGetPatchOnly,
-    IsUserGet, AdminOrReadOnly
+    IsAdmin,
+    IsSuperuser,
+    UserOrModeratorSelfGetPatchOnly,
+    AdminOrReadOnly
 )
-
-from .send_email import send_email
 from .serializers import (
     SignUpSerializer, TokenSerializer,
     UserSerializer,
@@ -37,7 +25,6 @@ from .serializers import (
     ReviewSerializer,
     GenresSerializer,
     CategoriesSerializer,
-
 )
 
 
@@ -68,6 +55,18 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, ReviewPermission)
     pagination_class = LimitOffsetPagination
+
+    def create(self, request, *args, **kwargs):
+        title_id = kwargs.get('title_id')
+        author = request.user
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if Review.objects.filter(author=author, title=title_id).exists():
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED,
+                        headers=headers)
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -187,8 +186,6 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if confirmation_code_is_valid:
             user = User.objects.get(username=serializer.data['username'])
             token = str(RefreshToken.for_user(user).access_token)
-            # token = RefreshToken.for_user(user).access_token
-            # print(token)
             return Response(data={'token': token}, status=200)
         else:
             return Response(data={'Ошибка': 'Код неправильный.'}, status=400)

@@ -1,9 +1,6 @@
-import re
-
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 import datetime as dt
-from django.contrib.auth.tokens import default_token_generator
 from rest_framework.validators import UniqueValidator
 from rest_framework import serializers, status
 from reviews.models import User, Title, Review, Comment, Genre, Category
@@ -66,30 +63,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         slug_field='username', read_only=True)
     score = serializers.IntegerField(max_value=10, min_value=1)
 
-
     class Meta:
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
-
-        def validate_review(self, data):
-            title_id = self.context['view'].kwargs.get('title_id')
-            author = self.context['request'].user
-            if Review.objects.filter(author=author, title=title_id).exists():
-                raise serializers.ValidationError(
-                    'Вы уже оставили отзыв об этом произведении.'
-                )
-            return data
-
-    # def validate_review(self, data):
-    #     if self.context['request'].method != 'POST':
-    #         return data
-    #     title_id = self.context['view'].kwargs.get('title_id')
-    #     author = self.context['request'].user
-    #     if Review.objects.filter(author=author, title=title_id).exists():
-    #         raise serializers.ValidationError(
-    #             'Вы уже оставили отзыв об этом произведении.'
-    #         )
-    #     return data
 
 
 class CommentSerializer(serializers.ModelSerializer):
