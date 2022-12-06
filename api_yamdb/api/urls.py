@@ -1,8 +1,8 @@
 from django.urls import include, path
 from rest_framework import routers
 from .views import (
-    TitleViewSet, 
-    ReviewViewSet, 
+    TitleViewSet,
+    ReviewViewSet,
     CommentsViewSet,
     GenresViewSet,
     CategoriesViewSet,
@@ -10,7 +10,6 @@ from .views import (
     SignUpViewSet,
     TokenViewSet,
 )
-
 
 router_v1 = routers.DefaultRouter()
 router_v1.register(r'titles', TitleViewSet, basename='titles')

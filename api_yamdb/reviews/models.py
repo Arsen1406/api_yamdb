@@ -1,8 +1,6 @@
-import enum
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db.models import CheckConstraint, Q, UniqueConstraint
 
 
 class User(AbstractUser):
@@ -31,7 +29,6 @@ class User(AbstractUser):
         default=USER,
         max_length=10
     )
-    # is_active = models.BooleanField(default=False)
 
 
 class Genre(models.Model):

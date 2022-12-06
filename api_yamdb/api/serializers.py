@@ -1,27 +1,29 @@
-import re
-
+import datetime as dt
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-import datetime as dt
-from django.contrib.auth.tokens import default_token_generator
 from rest_framework.validators import UniqueValidator
 from rest_framework import serializers, status
 from reviews.models import User, Title, Review, Comment, Genre, Category
 
 
 class CategoriesSerializer(serializers.ModelSerializer):
+    """Серилизатор для категорий."""
+
     class Meta:
         model = Category
         fields = ('name', 'slug')
 
 
 class GenresSerializer(serializers.ModelSerializer):
+    """Серилизатор для жанров произведений."""
+
     class Meta:
         model = Genre
         fields = ('name', 'slug')
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
+    """Серилизатор для произведений."""
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -37,6 +39,7 @@ class TitleCreateSerializer(serializers.ModelSerializer):
         fields = ('__all__')
 
     def validate_year(self, value):
+        """Валидатор проверяет не является произведение гостем избудущего"""
         today = dt.datetime.today().year
         if not (today >= value):
             raise serializers.ValidationError(
@@ -52,9 +55,11 @@ class TitlesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year', 'rating', 'description', 'genre', 'category')
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
+        )
 
     def get_rating(self, obj):
+        """Получаем средний рейтинг произведения."""
         rating = obj.reviews.all().aggregate(Avg('score')).get('score__avg')
         if not rating:
             return rating
@@ -62,6 +67,7 @@ class TitlesSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    """Серилизатор для отзывов."""
     author = serializers.SlugRelatedField(
         slug_field='username', read_only=True)
     score = serializers.IntegerField(max_value=10, min_value=1)
@@ -71,6 +77,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ('id', 'text', 'author', 'score', 'pub_date')
 
     def validate(self, data):
+        """Валидатор проверяет, что автор не оставит отзыв дважды."""
         if self.context['request'].method != 'POST':
             return data
         title_id = self.context['view'].kwargs.get('title_id')
@@ -83,6 +90,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """Серилизатор для комментариев отзывов."""
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True
@@ -92,7 +100,8 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
 
-    def validate_review(self, data):
+    def validate_comment(self, data):
+        """Валидатор на комментарии для отзыва."""
         if self.context['request'].method != 'PATCH':
             return data
         comment_id = self.context['view'].kwargs.get('comment_id')
@@ -106,6 +115,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class SignUpSerializer(serializers.ModelSerializer):
+    """Серилизатор для регистрации новых пользователей."""
     username = serializers.RegexField(
         '^[\w.@+-]+',
         max_length=150,
@@ -125,6 +135,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         fields = ('username', 'email')
 
     def validate_email(self, email):
+        """Проверка уникальности email."""
         if User.objects.filter(email=email).exists():
             raise serializers.ValidationError(
                 'Такой email уже существует.'
@@ -142,6 +153,8 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(SignUpSerializer):
+    """Серилизатор для профайла юзера."""
+
     class Meta:
         model = User
         fields = (
@@ -158,6 +171,7 @@ class UserSerializer(SignUpSerializer):
 
 
 class TokenSerializer(serializers.ModelSerializer):
+    """Серилизатор для передачи токена."""
     username = serializers.CharField(required=True)
     confirmation_code = serializers.CharField(required=True)
 
