@@ -1,26 +1,27 @@
-
 from rest_framework import permissions, exceptions
 
 from rest_framework import permissions
 from rest_framework.permissions import SAFE_METHODS
 from reviews.models import User
 
+
 class UserOrModeratorSelfGetPatchOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        request_username = str(request.parser_context['kwargs'].get('username')).lower()
+        request_username = str(
+            request.parser_context['kwargs'].get('username')).lower()
         if request.user.is_anonymous:
             return False
         if (
-            request.user.role in [User.USER, User.MODERATOR]
-            and request_username == 'me'
-            and request.method in ['GET', 'PATCH']
+                request.user.role in [User.USER, User.MODERATOR]
+                and request_username == 'me'
+                and request.method in ['GET', 'PATCH']
         ):
             return True
         elif (
-            request.user.role in [User.USER, User.MODERATOR]
-            and request_username == 'me'
-            and request.method in ['DELETE']
+                request.user.role in [User.USER, User.MODERATOR]
+                and request_username == 'me'
+                and request.method in ['DELETE']
         ):
             raise exceptions.MethodNotAllowed('DELETE')
 

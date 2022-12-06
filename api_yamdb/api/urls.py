@@ -3,14 +3,12 @@ from rest_framework import routers
 from .views import (
     TitleViewSet, 
     ReviewViewSet, 
-    CommentsViewSet, 
-    UsersViewSet,
-    SignUpViewSet,
+    CommentsViewSet,
     GenresViewSet,
     CategoriesViewSet,
-
-    TokenViewSet, UsersViewSet,
-    SignUpViewSet, TokenViewSet,
+    UsersViewSet,
+    SignUpViewSet,
+    TokenViewSet,
 )
 
 

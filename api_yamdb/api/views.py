@@ -1,3 +1,4 @@
+from django_filters import rest_framework
 from rest_framework import mixins, viewsets, filters, generics, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.authtoken.models import Token
@@ -8,7 +9,6 @@ from rest_framework.permissions import (
     IsAdminUser,
     AllowAny
 )
-from django_filters import rest_framework
 from django_filters.rest_framework import DjangoFilterBackend
 import requests
 from rest_framework.decorators import api_view
@@ -20,20 +20,13 @@ from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import (
-
     IsUser, IsModerator, IsAdmin, IsSuperuser, UserOrModeratorSelfGetPatchOnly,
-    AdminSuperUserOnly, AdminSuperUserOrReadOnly, IsUserGet
-)
-from .send_email import send_email
-from .serializers import (
-    SignUpSerializer, TokenSerializer, UserSerializer,
-
-    IsUser, IsModerator, IsAdmin, IsSuperuser, AdminOrReadOnly, IsUserGet
+    IsUserGet, AdminOrReadOnly
 )
 from .send_email import send_email
 from .serializers import (
     SignUpSerializer, TokenSerializer,
-    UserSerializer, MeSerializer,
+    UserSerializer,
     TitlesSerializer,
     TitleCreateSerializer,
     CommentSerializer,
@@ -128,7 +121,8 @@ class GenresViewSet(
 class UsersViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     serializer_class = UserSerializer
-    permission_classes = [UserOrModeratorSelfGetPatchOnly | IsAdmin | IsSuperuser]
+    permission_classes = [
+        UserOrModeratorSelfGetPatchOnly | IsAdmin | IsSuperuser]
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
