@@ -55,7 +55,7 @@ class TitlesSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category')
 
     def get_rating(self, obj):
-        rating = obj.reviews.aggregate(Avg('score')).get('score_avg')
+        rating = obj.reviews.all().aggregate(Avg('score')).get('score__avg')
         if not rating:
             return rating
         return round(rating, 1)
@@ -70,7 +70,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
 
-    def validate_review(self, data):
+    def validate(self, data):
         if self.context['request'].method != 'POST':
             return data
         title_id = self.context['view'].kwargs.get('title_id')
