@@ -9,6 +9,7 @@ from rest_framework.permissions import (
     IsAdminUser,
     AllowAny
 )
+from django_filters import rest_framework
 from django_filters.rest_framework import DjangoFilterBackend
 import requests
 from rest_framework.decorators import api_view
@@ -20,6 +21,8 @@ from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import (
+    IsUser, IsModerator, IsAdmin, IsSuperuser, AdminOrReadOnly, IsUserGet,ReviewPermission
+    )
     IsUser, IsModerator, IsAdmin, IsSuperuser, UserOrModeratorSelfGetPatchOnly,
     IsUserGet, AdminOrReadOnly
 )
@@ -55,14 +58,15 @@ class TitleViewSet(viewsets.ModelViewSet):
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == 'create' or self.action == 'partial_update':
             return TitleCreateSerializer
         return TitlesSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly,ReviewPermission)
+
 
     def update(self, request, *args, **kwargs):
         review = Review.objects.get(authot=self.kwargs.get('title_id'))
@@ -75,16 +79,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
         raise KeyError('Вы можете исправлять только свои отзывы')
 
     def get_queryset(self):
-        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         return title.reviews.all()
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         serializer.save(author=self.request.user, title=title)
 
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly, ReviewPermission)
+
 
     def perform_create(self, serializer):
         serializer.save(
