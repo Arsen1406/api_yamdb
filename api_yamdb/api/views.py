@@ -69,16 +69,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly, ReviewPermission)
     pagination_class = LimitOffsetPagination
 
-    # def update(self, request, *args, **kwargs):
-    #     review = Review.objects.get(authot=self.kwargs.get('title_id'))
-    #     if request.data.user == review.author:
-    #         partial = kwargs.pop('partial', False)
-    #         instance = self.get_object()
-    #         serializer = self.get_serializer(instance, data=request.data, partial=partial)
-    #         serializer.is_valid(raise_exception=True)
-    #         self.perform_update(serializer)
-    #     raise KeyError('Вы можете исправлять только свои отзывы')
-
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         return title.reviews.all()
