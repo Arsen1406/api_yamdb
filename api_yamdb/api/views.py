@@ -7,7 +7,7 @@ from rest_framework import mixins, viewsets, filters, status
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from reviews.models import User, Title, Review, Comment, Genre, Category
+from reviews.models import User, Title, Review, Genre, Category
 from .permissions import (
     IsAdmin,
     IsSuperuser,
@@ -90,7 +90,8 @@ class CategoriesViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
-    viewsets.GenericViewSet):
+    viewsets.GenericViewSet
+):
     """Категории для произведений."""
     serializer_class = CategoriesSerializer
     permission_classes = (AdminOrReadOnly,)
@@ -105,7 +106,8 @@ class GenresViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
-    viewsets.GenericViewSet):
+    viewsets.GenericViewSet
+):
     """Жанры для произведений."""
     serializer_class = GenresSerializer
     queryset = Genre.objects.all()

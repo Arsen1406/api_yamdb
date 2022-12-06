@@ -109,8 +109,7 @@ class CommentSerializer(serializers.ModelSerializer):
         author = self.context['request'].user
         if comment.author != author:
             raise serializers.ValidationError(
-                'Вы можете редактировать только свои комментарии.'
-            )
+                'Вы можете редактировать только свои комментарии.')
         return data
 
 
