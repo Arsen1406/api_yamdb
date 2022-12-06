@@ -45,16 +45,11 @@ class IsSuperuser(permissions.BasePermission):
 class AdminSuperUserOnly(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        role_admin = ('SUPRUSER', 'ADMIN')
-        if request.user.is_anonymous or request.user.role not in role_admin:
-            return False
-        return True
+        return request.user.is_staff
 
 
 class AdminSuperUserOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
-        role_adm = ('SUPRUSER', 'ADMIN')
         if request.method != 'GET':
-            if request.user.is_anonymous or request.user.role not in role_adm:
-                return False
+            return request.user.is_staff
         return True

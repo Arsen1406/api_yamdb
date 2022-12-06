@@ -1,20 +1,10 @@
 from rest_framework import mixins, viewsets, filters, generics, status
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-    IsAdminUser
-)
-
-import requests
-from rest_framework.decorators import api_view
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from reviews.models import User, Title, Review, Comment, Genre, Category
 from .permissions import (
@@ -37,7 +27,7 @@ from .serializers import (
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    permission_classes = (AdminSuperUserOrReadOnly, )
+    permission_classes = (AdminSuperUserOrReadOnly,)
     queryset = Title.objects.all()
     serializer_class = TitlesSerializer
 
@@ -49,7 +39,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
@@ -87,6 +77,7 @@ class GenresViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     lookup_field = 'slug'
     permission_classes = (AdminSuperUserOrReadOnly,)
+    search_fields = ('name',)
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -98,15 +89,6 @@ class UsersViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED,
-                            headers=headers)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class MeViewSet(mixins.RetrieveModelMixin,
                 mixins.UpdateModelMixin,
@@ -115,7 +97,7 @@ class MeViewSet(mixins.RetrieveModelMixin,
     permission_classes = (IsUserGet, IsModerator, IsAdmin, IsSuperuser)
 
     def get_queryset(self):
-        return get_object_or_404(User, pk=self.request.user)
+        return get_object_or_404(User, username=self.request.user.username)
 
 
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -150,5 +132,4 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             user = User.objects.get(username=serializer.data['username'])
             token = str(RefreshToken.for_user(user).access_token)
             return Response(data={'token': token}, status=200)
-        else:
-            return Response(data={'Ошибка': 'Код неправильный.'}, status=400)
+        return Response(data={'Ошибка': 'Код неправильный.'}, status=400)
