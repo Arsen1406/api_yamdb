@@ -1,6 +1,6 @@
 from rest_framework import exceptions
 from rest_framework import permissions
-from reviews.models import User
+from users.models import User
 
 
 class UserOrModeratorSelfGetPatchOnly(permissions.BasePermission):

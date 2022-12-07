@@ -6,7 +6,8 @@ from rest_framework import mixins, viewsets, filters, status
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from reviews.models import User, Title, Review, Genre, Category
+from reviews.models import Title, Review, Genre, Category
+from users.models import User
 from .permissions import (
     IsAdmin,
     IsSuperuser,

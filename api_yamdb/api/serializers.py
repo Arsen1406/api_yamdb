@@ -1,10 +1,9 @@
 import datetime as dt
 from django.db.models import Avg
-from django.shortcuts import get_object_or_404
 from rest_framework.validators import UniqueValidator
 from rest_framework import serializers, status
-from reviews.models import User, Title, Review, Comment, Genre, Category
-
+from reviews.models import Title, Review, Comment, Genre, Category
+from users.models import User
 
 class CategoriesSerializer(serializers.ModelSerializer):
     """Серилизатор для категорий."""
