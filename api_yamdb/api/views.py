@@ -1,4 +1,3 @@
-from django_filters import rest_framework
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -15,7 +14,8 @@ from .permissions import (
     ReviewPermission,
     UserOrModeratorSelfGetPatchOnly
 )
-from .send_email import send_email
+from .filterset import TitleFilter
+from .generation_code import generation_confirm_code
 from .serializers import (
     SignUpSerializer, TokenSerializer,
     UserSerializer,
@@ -29,15 +29,12 @@ from .serializers import (
 )
 
 
-class TitleFilter(rest_framework.FilterSet):
-    """Фильтрация проектов."""
-    name = rest_framework.CharFilter(field_name='name', lookup_expr='contains')
-    genre = rest_framework.CharFilter(field_name='genre__slug')
-    category = rest_framework.CharFilter(field_name='category__slug')
-
-    class Meta:
-        model = Title
-        fields = ('category', 'genre', 'year', 'name')
+class BaseMyViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet):
+    pass
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -86,12 +83,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
         return review.comments.all()
 
 
-class CategoriesViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
+class CategoriesViewSet(BaseMyViewSet):
     """Категории для произведений."""
     serializer_class = CategoriesSerializer
     permission_classes = (AdminOrReadOnly,)
@@ -102,12 +94,7 @@ class CategoriesViewSet(
     pagination_class = LimitOffsetPagination
 
 
-class GenresViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
+class GenresViewSet(BaseMyViewSet):
     """Жанры для произведений."""
     serializer_class = GenresSerializer
     queryset = Genre.objects.all()
@@ -128,27 +115,10 @@ class UsersViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED,
-                headers=headers
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
     def get_queryset(self):
         if str(self.kwargs.get('username')).lower() == 'me':
             self.kwargs['username'] = self.request.user
         return User.objects.all()
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -161,7 +131,7 @@ class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         user = User.objects.get(username=serializer.data['username'])
-        send_email(user)
+        generation_confirm_code(user)
 
         return Response(serializer.data, status=status.HTTP_200_OK,
                         headers=headers)
@@ -184,8 +154,9 @@ class TokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         if confirmation_code_is_valid:
             user = User.objects.get(username=serializer.data['username'])
             token = str(RefreshToken.for_user(user).access_token)
-            # token = RefreshToken.for_user(user).access_token
-            # print(token)
-            return Response(data={'token': token}, status=200)
+            return Response(data={'token': token}, status=status.HTTP_200_OK)
         else:
-            return Response(data={'Ошибка': 'Код неправильный.'}, status=400)
+            return Response(
+                data={'Ошибка': 'Код неправильный.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )

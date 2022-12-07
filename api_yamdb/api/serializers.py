@@ -76,17 +76,17 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ('id', 'text', 'author', 'score', 'pub_date')
 
-    def validate(self, data):
+    def validate(self, attrs):
         """Валидатор проверяет, что автор не оставит отзыв дважды."""
-        if self.context['request'].method != 'POST':
-            return data
+        if self.instance:
+            return attrs
         title_id = self.context['view'].kwargs.get('title_id')
         author = self.context['request'].user
         if Review.objects.filter(author=author, title=title_id).exists():
             raise serializers.ValidationError(
                 'Вы уже оставили отзыв об этом произведении.'
             )
-        return data
+        return attrs
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -178,14 +178,3 @@ class TokenSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'confirmation_code')
         read_only_fields = ('username', 'confirmation_code')
-
-    def validate_username(self, username):
-        """Проверка существования пользователя."""
-        user = get_object_or_404(User, username=username)
-        if user:
-            return username
-        else:
-            raise serializers.ValidationError(
-                f'Пользователя с username={username} не существует',
-                code=status.HTTP_404_NOT_FOUND
-            )
