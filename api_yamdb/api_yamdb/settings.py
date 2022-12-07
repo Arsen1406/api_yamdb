@@ -26,8 +26,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'reviews.apps.ReviewsConfig',
-    'api.apps.ApiConfig'
-
+    'api.apps.ApiConfig',
+    'users.apps.UsersConfig'
 ]
 
 MIDDLEWARE = [
@@ -105,12 +105,10 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static/'),)
 
-AUTH_USER_MODEL = 'reviews.User'
+AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 'rest_framework.authentication.BasicAuthentication',
-        # 'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 
