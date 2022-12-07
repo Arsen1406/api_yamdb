@@ -1,3 +1,4 @@
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -5,15 +6,17 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework import mixins, viewsets, filters, status
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.tokens import default_token_generator
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticatedOrReadOnly,
+    IsAuthenticated
+)
 from reviews.models import Title, Review, Genre, Category
 from users.models import User
 from .permissions import (
     IsAdmin,
     IsSuperuser,
     AdminOrReadOnly,
-    ReviewPermission,
-    UserOrModeratorSelfGetPatchOnly
+    ReviewPermission
 )
 from .filterset import TitleFilter
 from .generation_code import generation_confirm_code
@@ -110,16 +113,19 @@ class UsersViewSet(viewsets.ModelViewSet):
     """Профайл для пользователя."""
     lookup_field = 'username'
     serializer_class = UserSerializer
-    permission_classes = [
-        UserOrModeratorSelfGetPatchOnly | IsAdmin | IsSuperuser]
+    permission_classes = [IsAdmin | IsSuperuser]
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
+    queryset = User.objects.all()
 
-    def get_queryset(self):
-        if str(self.kwargs.get('username')).lower() == 'me':
-            self.kwargs['username'] = self.request.user
-        return User.objects.all()
+    @action(detail=False, methods=['get', 'patch'],
+            permission_classes=(IsAuthenticated,))
+    def me(self, request, *args, **kwargs):
+        self.kwargs['username'] = self.request.user
+        if self.request.method == 'PATCH':
+            return self.update(request, partial=True, *args, **kwargs)
+        return self.retrieve(request, *args, **kwargs)
 
 
 class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):

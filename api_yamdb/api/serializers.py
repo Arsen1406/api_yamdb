@@ -5,6 +5,7 @@ from rest_framework import serializers, status
 from reviews.models import Title, Review, Comment, Genre, Category
 from users.models import User
 
+
 class CategoriesSerializer(serializers.ModelSerializer):
     """Серилизатор для категорий."""
 
