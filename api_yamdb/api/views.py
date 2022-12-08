@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework import mixins, viewsets, filters, status
+from rest_framework import filters, status
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.permissions import (
@@ -32,15 +32,6 @@ from .serializers import (
     CategoriesSerializer,
 
 )
-
-
-class BaseMyViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
-    pass
 
 
 class TitleViewSet(viewsets.ModelViewSet):
