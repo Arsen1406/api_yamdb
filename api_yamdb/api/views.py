@@ -19,7 +19,7 @@ from .permissions import (
     ReviewPermission
 )
 from .filterset import TitleFilter
-from .generation_code import generation_confirm_code
+from .generation_code import send_confirmation_code
 from .serializers import (
     SignUpSerializer, TokenSerializer,
     UserSerializer,
@@ -139,7 +139,7 @@ class SignUpViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         user = User.objects.get(username=serializer.data['username'])
-        generation_confirm_code(user)
+        send_confirmation_code(user)
 
         return Response(serializer.data, status=status.HTTP_200_OK,
                         headers=headers)
