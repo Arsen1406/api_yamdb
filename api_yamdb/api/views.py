@@ -20,6 +20,7 @@ from .permissions import (
 )
 from .filterset import TitleFilter
 from .generation_code import send_confirmation_code
+from .my_base_viewset import BaseMyViewSet
 from .serializers import (
     SignUpSerializer, TokenSerializer,
     UserSerializer,
@@ -51,7 +52,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
-        if self.action == 'create' or self.action == 'partial_update':
+        if self.action in ['create','partial_update']:
             return TitleCreateSerializer
         return TitlesSerializer
 
