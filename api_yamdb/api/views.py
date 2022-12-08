@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework import filters, status
+from rest_framework import viewsets, mixins, filters, status
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.permissions import (
@@ -19,7 +19,7 @@ from .permissions import (
     ReviewPermission
 )
 from .filterset import TitleFilter
-from .generation_code import send_confirmation_code
+from .send_confirmation_code import send_confirmation_code
 from .my_base_view_set import BaseMyViewSet
 from .serializers import (
     SignUpSerializer, TokenSerializer,
@@ -43,7 +43,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
-        if self.action in ['create','partial_update']:
+        if self.action in ['create', 'partial_update']:
             return TitleCreateSerializer
         return TitlesSerializer
 
