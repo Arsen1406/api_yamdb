@@ -20,7 +20,7 @@ from .permissions import (
 )
 from .filterset import TitleFilter
 from .generation_code import send_confirmation_code
-from .my_base_viewset import BaseMyViewSet
+from .my_base_view_set import BaseMyViewSet
 from .serializers import (
     SignUpSerializer, TokenSerializer,
     UserSerializer,
