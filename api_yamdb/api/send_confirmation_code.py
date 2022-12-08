@@ -3,7 +3,7 @@ from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 
 
-def generation_confirm_code(user):
+def send_confirmation_code(user):
     """Отправка письма на электронную почту."""
     them = 'Ваш код подтверждения'
     confirmation_code = default_token_generator.make_token(user)
